@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="report_pos_payment_summary">
+            <t t-set="company" t-value="env.company"/>
+            <t t-call="web.basic_layout">
+
+                <style type="text/css">
+
+                    .page { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; color: #1f2937; font-size: 1rem; }
+                    
+
+                    .report-header {
+                        background: #f8fafc;
+                        color: #111827;
+                        padding: 1.25rem 1.5rem;
+                        border-radius: 10px;
+                        margin-bottom: 1.25rem;
+                        border: 1px solid #e5e7eb;
+                    }
+                    .report-header h1 { 
+                        font-size: 1.6rem; 
+                        font-weight: 600; 
+                        letter-spacing: 0;
+                        margin: 0;
+                        color: #111827;
+                    }
+                    .report-header .company-info {
+                        font-size: 0.95rem;
+                        opacity: 0.9;
+                        margin-top: 0.25rem;
+                        color: #374151;
+                    }
+                    .period-badge {
+                        background: #ffffff;
+                        border: 1px solid #e5e7eb;
+                        color: #111827;
+                        padding: 0.35rem 0.75rem;
+                        border-radius: 8px;
+                        font-size: 0.9rem;
+                    }
+                    
+                    .filter-card {
+                        background: white;
+                        border: none;
+                        border-radius: 10px;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+                        transition: all 0.3s ease;
+                        overflow: hidden;
+                    }
+                    .filter-card:before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 3px;
+                        background: linear-gradient(90deg, #667eea, #764ba2);
+                    }
+                    .filter-badge {
+                        background: #f7f9fc;
+                        border: 1px solid #e2e8f0;
+                        color: #4a5568;
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 6px;
+                        font-size: 0.85rem;
+                        display: inline-block;
+                        margin: 0.2rem 0.2rem 0.2rem 0;
+                    }
+                    
+                    .text-success { color: #166534 !important; } 
+                    .text-warning { color: #b45309 !important; } 
+                    .text-primary { color: #1d4ed8 !important; } 
+                    
+                    .data-table {
+                        background: white;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                    }
+                    .data-table .table {
+                        margin-bottom: 0;
+                        table-layout: fixed;
+                        width: 100%;
+                    }
+                    .data-table .table th, .data-table .table td { text-align: center; }
+                    .data-table thead {
+                        background: #eef2ff;
+                        color: #1f2937;
+                    }
+                    .data-table thead th {
+                        border: 1px solid #e5e7eb;
+                        padding: 0.75rem;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        font-size: 0.85rem;
+                        letter-spacing: 0.4px;
+                    }
+                    .data-table tbody td {
+                        padding: 0.75rem 0.875rem;
+                        border-bottom: 1px solid #e5e7eb;
+                        vertical-align: middle;
+                    }
+                    .data-table tbody tr:hover {
+                        background: #fafafa;
+                    }
+                    .data-table tbody tr:last-child td {
+                        border-bottom: none;
+                    }
+                    .data-table tfoot {
+                        background: #f8fafc;
+                        font-weight: 600;
+                    }
+                    .data-table tfoot th, .data-table tfoot td {
+                        padding: 1rem;
+                        border-top: 2px solid #e2e8f0;
+                    }
+                    .neutral-cell {
+                        background: #ffffff !important;
+                        color: #1a202c !important;
+                    }
+                    
+                    
+                    /* Section Headers */
+                    .section-header {
+                        position: relative;
+                        margin: 2rem 0 1.5rem 0;
+                        padding-bottom: 0.75rem;
+                    }
+                    .section-header h3 {
+                        font-size: 1.3rem;
+                        font-weight: 600;
+                        color: #2d3748;
+                        position: relative;
+                        display: inline-block;
+                    }
+                    .section-header:after {
+                        content: '';
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 60px;
+                        height: 3px;
+                        background: linear-gradient(90deg, #667eea, #764ba2);
+                        border-radius: 2px;
+                    }
+                    
+                    @media print {
+                        .report-header { 
+                            background: #f3f4f6 !important;
+                            color: #111827 !important;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .data-table thead {
+                            background: #eef2ff !important;
+                            color: #111827 !important;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        .data-table {
+                            break-inside: avoid;
+                            page-break-inside: avoid;
+                        }
+                    }
+                </style>
+                
+                <div class="page">
+                    <div class="report-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1>Payment Method Summary Report</h1>
+                                <div class="company-info">
+                                    <i class="fa fa-building me-1"></i>
+                                    <span t-esc="company.name"/>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="period-badge">
+                                    <i class="fa fa-calendar me-2"></i>
+                                    <strong>Period:</strong>
+                                    <span t-out="date_start" t-options="{'widget': 'datetime'}"/> -
+                                    <span t-out="date_stop" t-options="{'widget': 'datetime'}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="section-header">
+                                <h3>Applied Filters</h3>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="filter-card card position-relative">
+                                <div class="card-body">
+                                    <div class="fw-bold text-secondary mb-2">
+                                        <i class="fa fa-desktop me-2"></i>POS Configurations
+                                    </div>
+                                    <div>
+                                        <t t-if="config_names">
+                                            <t t-foreach="config_names" t-as="n">
+                                                <span class="filter-badge" t-esc="n"/>
+                                            </t>
+                                        </t>
+                                        <t t-else=""> 
+                                            <span class="filter-badge">All POS Configurations</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="filter-card card position-relative">
+                                <div class="card-body">
+                                    <div class="fw-bold text-secondary mb-2">
+                                        <i class="fa fa-credit-card me-2"></i>Payment Methods
+                                    </div>
+                                    <div>
+                                        <t t-if="method_names">
+                                            <t t-foreach="method_names" t-as="n">
+                                                <span class="filter-badge" t-esc="n"/>
+                                            </t>
+                                        </t>
+                                        <t t-else=""> 
+                                            <span class="filter-badge">All Payment Methods</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="filter-card card position-relative">
+                                <div class="card-body">
+                                    <div class="fw-bold text-secondary mb-2">
+                                        <i class="fa fa-clock me-2"></i>Sessions
+                                    </div>
+                                    <div>
+                                        <t t-if="session_names">
+                                            <t t-foreach="session_names" t-as="n">
+                                                <span class="filter-badge" t-esc="n"/>
+                                            </t>
+                                        </t>
+                                        <t t-else=""> 
+                                            <span class="filter-badge">All Sessions</span>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="section-header">
+                        <h3>Payment Methods Analysis</h3>
+                    </div>
+                    <div class="data-table mb-5">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Payment Method</th>
+                                    <th class="text-center">Transactions</th>
+                                    <th class="text-center">Sessions</th>
+                                    <th class="text-center">Received</th>
+                                    <th class="text-center">Change</th>
+                                    <th class="text-center">Net Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="summary" t-as="line">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fa fa-credit-card text-secondary me-2"></i>
+                                            <span class="fw-medium" t-esc="line['method_name']"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="line['payments_count']"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span t-esc="line['sessions_count']"/>
+                                    </td>
+                                    <td class="text-center fw-medium">
+                                        <span class="text-success" t-esc="line['in_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-warning" t-esc="line['change_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </td>
+                                    <td class="text-center fw-bold">
+                                        <span class="text-primary" t-esc="line['net_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </td>
+                                </tr>
+                                <tr t-if="not summary">
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fa fa-info-circle fa-3x mb-3"></i>
+                                            <div>No payment data found for the selected criteria</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>
+                                        <i class="fa fa-calculator me-2"></i>
+                                        Grand Total
+                                    </th>
+                                    <th class="text-center neutral-cell">
+                                        <span t-esc="totals['payments_count']"/>
+                                    </th>
+                                    <th class="text-center neutral-cell">
+                                        <span t-esc="totals['sessions_count']"/>
+                                    </th>
+                                    <th class="text-center text-success fw-bold">
+                                        <span t-esc="totals['in_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </th>
+                                    <th class="text-center text-warning fw-bold">
+                                        <span t-esc="totals['change_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </th>
+                                    <th class="text-center text-primary fw-bold fs-5">
+                                        <span t-esc="totals['net_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div t-if="group_by_config and config_lines">
+                        <div class="section-header">
+                            <h3>POS Totals by Configuration</h3>
+                        </div>
+                        <div class="data-table mb-5">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>POS</th>
+                                        <th class="text-center">Transactions</th>
+                                        <th class="text-center">Sessions</th>
+                                        <th class="text-center">Received</th>
+                                        <th class="text-center">Change</th>
+                                        <th class="text-center">Net Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="config_lines" t-as="cl">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-store text-secondary me-2"></i>
+                                                <span class="fw-medium" t-esc="cl['config_name']"/>
+                                            </div>
+                                        </td>
+                                        <td class="text-center" t-esc="cl['payments_count']"/>
+                                        <td class="text-center" t-esc="cl['sessions_count']"/>
+                                        <td class="text-center text-success fw-medium">
+                                            <span t-esc="cl['in_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="text-warning" t-esc="cl['change_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                        </td>
+                                        <td class="text-center fw-bold">
+                                            <span class="text-primary" t-esc="cl['net_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div t-if="group_by_session and session_lines">
+                        <div class="section-header">
+                            <h3>Detailed Session Breakdown</h3>
+                        </div>
+                        <div class="data-table">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <i class="fa fa-credit-card me-2"></i>
+                                            Payment Method
+                                        </th>
+                                        <th>
+                                            <i class="fa fa-clock me-2"></i>
+                                            Session
+                                        </th>
+                                        <th class="text-center">
+                                            <i class="fa fa-money me-2"></i>
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="current_method" t-value="''"/>
+                                    <tr t-foreach="session_lines" t-as="sl">
+                                        <td>
+                                            <t t-if="sl['method_name'] != current_method">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-2">
+                                                        <i class="fa fa-credit-card text-primary"></i>
+                                                    </div>
+                                                    <span class="fw-medium" t-esc="sl['method_name']"/>
+                                                </div>
+                                                <t t-set="current_method" t-value="sl['method_name']"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="ps-5 text-muted">―</span>
+                                            </t>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-info bg-opacity-10 rounded-circle p-1 me-2">
+                                                    <i class="fa fa-clock text-info" style="font-size: 0.8rem;"></i>
+                                                </div>
+                                                <span t-esc="sl['session_name']"/>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success text-white px-3 py-2">
+                                                <span t-esc="sl['amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="mt-5 pt-3 border-top">
+                        <div class="row">
+                            <div class="col-6 text-muted small">
+                                <i class="fa fa-info-circle me-1"></i>
+                                Report generated on <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M:%S')"/>
+                            </div>
+                            <div class="col-6 text-end text-muted small">
+                                <i class="fa fa-user me-1"></i>
+                                Generated by <span t-esc="env.user.name"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>
